@@ -30,7 +30,7 @@ export const RequestProvider = ({ children }: { children: React.ReactNode }) => 
       setRequests(savedRequests);
     }
     setIsLoading(false);
-  }, []);
+  }, [requests]);
 
   const addRequest = (newRequest: Omit<Request, 'id'>) => {
     setIsLoading(true);
