@@ -8,66 +8,173 @@ import { ChevronDownIcon } from '../../../icons';
 import DatePicker from '@/components/form/date-picker';
 import TextArea from '../input/TextArea';
 import FileInput from '../input/FileInput';
+import { useRequests } from '@/context/RequestContext';
+import { Request } from '@/types/request';
 
 export default function RequestInputs() {
-  const [description, setDescription] = useState("");
-  const [notes, setNotes] = useState("");
-  const handleSelectChangeStatus = (value: string) => {
-    console.log("Selected value:", value);
-  };
+  const { addRequest, isLoading } = useRequests();
+  const [formData, setFormData] = useState<Omit<Request, 'id'>>({
+    module: '',
+    name: '',
+    priority: '', // Set default value
+    description: '',
+    status: '', // Set default value
+    relation: '',
+    createdAt: new Date().toISOString().split('T')[0], // Set default to today
+    requestedBy: '',
+    notes: '',
+    reference: null,
+  });
+
+  const [errors, setErrors] = useState<Partial<Omit<Request, 'id'>>>({});
 
   const optionsPriority = [
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
+    { value: "Low", label: "Low" },
+    { value: "Medium", label: "Medium" },
+    { value: "High", label: "High" },
   ];
-  const handleSelectChangePriority = (value: string) => {
-    console.log("Selected value:", value);
-  };
 
   const optionsStatus = [
-    { value: "dalam review", label: "Dalam Review" },
-    { value: "blocked", label: "Blocked" },
-    { value: "di setujui", label: "Di Setujui" },
-    { value: "draft", label: "Draft" },
+    { value: "Dalam Review", label: "Dalam Review" },
+    { value: "Blocked", label: "Blocked" },
+    { value: "Di Setujui", label: "Di Setujui" },
+    { value: "Draft", label: "Draft" },
   ];
-  
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<Omit<Request, 'id'>> = {};
+    
+    if (!formData.module.trim()) {
+      newErrors.module = 'Modul/Halaman wajib diisi';
+    }
+    
+    if (!formData.name.trim()) {
+      newErrors.name = 'Nama Kebutuhan wajib diisi';
+    }
+    
+    if (!formData.description.trim()) {
+      newErrors.description = 'Deskripsi wajib diisi';
+    }
+    
+    if (!formData.requestedBy.trim()) {
+      newErrors.requestedBy = 'Requestor wajib diisi';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleTextAreaChange = (name: string) => (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleSelectChange = (name: string) => (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        console.log("Selected file:", file.name);
-      }
-    };
+    const file = event.target.files?.[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        reference: file
+      }));
+    }
+  };
+
+  const handleDateChange = (dates: Date[], dateString: string) => {
+    setFormData(prev => ({
+      ...prev,
+      createdAt: dateString
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    addRequest(formData);
+    
+    // Reset form
+    setFormData({
+      module: '',
+      name: '',
+      priority: 'low',
+      description: '',
+      status: 'draft',
+      relation: '',
+      createdAt: new Date().toISOString().split('T')[0],
+      requestedBy: '',
+      notes: '',
+      reference: null,
+    });
+  };
+
   return (
     <ComponentCard title="Request Inputs">
-      <div className="space-y-6">
-
-        {/* ID Input */}
-        <div>
-          <Label>ID</Label>
-          <Input type="text" placeholder='Masukkan ID Request'/>
-        </div>
-
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Modul/Halaman Input */}
         <div>
           <Label>Modul/Halaman</Label>
-          <Input type="text" placeholder="Masukkan Modul/Halaman" />
+          <Input 
+            type="text" 
+            name="module"
+            defaultValue={formData.module}
+            onChange={handleInputChange}
+            placeholder="Masukkan Modul/Halaman"
+            // error={errors.module}
+          />
         </div>
 
         {/* Nama Kebutuhan Input */}
         <div>
           <Label>Nama Kebutuhan</Label>
-          <Input type="text" placeholder="Masukkan Kebutuhan" />
+          <Input 
+            type="text" 
+            name="name"
+            defaultValue={formData.name}
+            onChange={handleInputChange}
+            placeholder="Masukkan Kebutuhan"
+            // error={errors.name}
+          />
         </div>
 
         {/* Deskripsi TextArea */}
         <div>
           <Label>Deskripsi</Label>
           <TextArea
-            value={description}
-            onChange={(value) => setDescription(value)}
+            value={formData.description}
+            onChange={handleTextAreaChange('description')}
             rows={6}
             placeholder='Masukkan Deskripsi Kebutuhan'
+            // error={errors.description}
           />
         </div>
 
@@ -76,12 +183,13 @@ export default function RequestInputs() {
           <Label>Prioritas</Label>
           <div className="relative">
             <Select
-            options={optionsPriority}
-            placeholder="Select an option"
-            onChange={handleSelectChangePriority}
-            className="dark:bg-dark-900"
-          />
-             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+              options={optionsPriority}
+              placeholder="Pilih Prioritas"
+              onChange={handleSelectChange('priority')}
+              defaultValue={formData.priority}
+              className="dark:bg-dark-900"
+            />
+            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <ChevronDownIcon/>
             </span>
           </div>
@@ -92,12 +200,13 @@ export default function RequestInputs() {
           <Label>Status</Label>
           <div className="relative">
             <Select
-            options={optionsStatus}
-            placeholder="Select an option"
-            onChange={handleSelectChangeStatus}
-            className="dark:bg-dark-900"
-          />
-             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+              options={optionsStatus}
+              placeholder="Pilih Status"
+              onChange={handleSelectChange('status')}
+              defaultValue={formData.status}
+              className="dark:bg-dark-900"
+            />
+            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <ChevronDownIcon/>
             </span>
           </div>
@@ -106,7 +215,13 @@ export default function RequestInputs() {
         {/* Relasi Input */}
         <div>
           <Label>Relasi</Label>
-          <Input type="text" placeholder="Masukkan Relasi" />
+          <Input 
+            type="text" 
+            name="relation"
+            defaultValue={formData.relation}
+            onChange={handleInputChange}
+            placeholder="Masukkan Relasi" 
+          />
         </div>
 
         {/* Tanggal Buat DatePicker */}
@@ -114,26 +229,31 @@ export default function RequestInputs() {
           <DatePicker
             id="date-picker"
             label="Tanggal Buat"
-            placeholder="Select a date"
-            onChange={(dates, currentDateString) => {
-              // Handle your logic
-              console.log({ dates, currentDateString });
-            }}
+            placeholder="Pilih Tanggal"
+            onChange={handleDateChange}
+            // defaultDate={formData.createdAt ? new Date(formData.createdAt) : null}
           />
         </div>
 
         {/* Di Request Oleh Input */}
         <div>
           <Label>Di Request Oleh</Label>
-          <Input type="text" placeholder="Masukkan Requestor" />
+          <Input 
+            type="text" 
+            name="requestedBy"
+            defaultValue={formData.requestedBy}
+            onChange={handleInputChange}
+            placeholder="Masukkan Requestor"
+            // error={errors.requestedBy}
+          />
         </div>
 
         {/* Catatan TextArea */}
         <div>
           <Label>Catatan</Label>
           <TextArea
-            value={notes}
-            onChange={(value) => setNotes(value)}
+            value={formData.notes}
+            onChange={handleTextAreaChange('notes')}
             rows={6}
             placeholder='Masukkan Catatan'
           />
@@ -142,17 +262,28 @@ export default function RequestInputs() {
         {/* Referensi FileInput */}
         <div>
           <Label>Referensi</Label>
-          <FileInput onChange={handleFileChange} className="custom-class" />
+          <FileInput 
+            onChange={handleFileChange} 
+            className="custom-class"
+          />
+          {formData.reference && (
+            <p className="mt-1 text-sm text-gray-500">
+              File terpilih: {formData.reference.name}
+            </p>
+          )}
         </div>
 
         {/* Submit Button */}
-        <a
-        href="#"
-        className="flex items-center justify-center p-3 font-medium text-white rounded-lg bg-brand-500 text-theme-sm hover:bg-brand-600 mt-14"
-      >
-        Submit
-      </a>
-      </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`flex items-center justify-center p-3 font-medium text-white rounded-lg bg-brand-500 text-theme-sm hover:bg-brand-600 mt-14 w-full ${
+            isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {isLoading ? 'Menyimpan...' : 'Submit'}
+        </button>
+      </form>
     </ComponentCard>
   );
 }
