@@ -80,16 +80,13 @@ export default function RequestTable() {
   return <span className="text-yellow-500">Unsupported Reference Type</span>;
 };
 
-    if (isLoading) {
+  if (isLoading) {
     return <div>Loading requests...</div>;
   }
 
   if (requests.length === 0) {
     return (
-      <NotFound
-        
-       
-      />
+      <NotFound/>
     );
   }
 
