@@ -3,15 +3,29 @@ import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { MoreDotIcon } from "@/icons";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
+import { useRequests } from "@/context/RequestContext";
 
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-export default function MonthlySalesChart() {
+export default function MonthlyRequestChart() {
+  const { requests } = useRequests();
+
+  // Generate request count per month
+const monthlyRequestCounts = useMemo(() => {
+  const counts = Array(12).fill(0);
+  requests.forEach((req) => {
+    const date = new Date(req.createdAt);
+    const month = date.getMonth();
+    counts[month]++;
+  });
+  return counts;
+}, [requests]);
+
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -91,12 +105,13 @@ export default function MonthlySalesChart() {
       },
     },
   };
+
   const series = [
-    {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
-    },
-  ];
+  {
+    name: "Requests",
+    data: monthlyRequestCounts,
+  },
+];
   const [isOpen, setIsOpen] = useState(false);
 
   function toggleDropdown() {
@@ -111,7 +126,7 @@ export default function MonthlySalesChart() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Monthly Sales
+          Monthly Requests
         </h3>
 
         <div className="relative inline-block">
