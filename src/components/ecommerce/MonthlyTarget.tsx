@@ -14,7 +14,7 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 });
 
 export default function MonthlyTarget() {
-  const { requests } = useRequests();
+const { requests } = useRequests();
 
 // Contoh: target bulanan
 const monthlyTarget = 50;
