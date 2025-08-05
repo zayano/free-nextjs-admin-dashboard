@@ -2,8 +2,9 @@
 import React from "react";
 // import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import ChartTab from "../common/ChartTab";
+// import ChartTab from "../common/ChartTab";
 import dynamic from "next/dynamic";
+import { useRequests } from "@/context/RequestContext";
 
 // Dynamically import the ReactApexChart component
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -109,16 +110,38 @@ export default function StatisticsChart() {
     },
   };
 
+  const { requests } = useRequests();
+
+  // Process requests data to get monthly counts
+  const processRequestData = () => {
+    // Initialize an array with 12 zeros (one for each month)
+    const monthlyCounts = Array(12).fill(0);
+    
+    if (requests) {
+      requests.forEach(request => {
+        const date = new Date(request.createdAt); // Assuming createdAt exists
+        const month = date.getMonth(); // 0-11
+        monthlyCounts[month]++;
+      });
+    }
+    
+    return monthlyCounts;
+  };
+
+  const requestCounts = processRequestData();
+  
+
   const series = [
     {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+      name: "Requests",
+      data: requestCounts,
     },
-    {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-    },
+    // {
+    //   name: "Revenue",
+    //   data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
+    // },
   ];
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
@@ -127,12 +150,12 @@ export default function StatisticsChart() {
             Statistics
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Target you’ve set for each month
+            Request activity by month
           </p>
         </div>
-        <div className="flex items-start w-full gap-3 sm:justify-end">
+        {/* <div className="flex items-start w-full gap-3 sm:justify-end">
           <ChartTab />
-        </div>
+        </div> */}
       </div>
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
