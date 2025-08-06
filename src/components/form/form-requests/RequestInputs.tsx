@@ -113,32 +113,43 @@ export default function RequestInputs() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      window.alert('Gagal menyimpan request. Silakan coba lagi!');
       return;
     }
     
-    addRequest(formData);
-    
-    // Reset form
-    setFormData({
-      module: '',
-      name: '',
-      priority: 'low',
-      description: '',
-      status: 'draft',
-      relation: '',
-      createdAt: new Date().toISOString().split('T')[0],
-      requestedBy: '',
-      notes: '',
-      reference: null,
-    });
+    try {
+      await addRequest(formData);
+      
+      // Show success notification
+      window.alert('Request berhasil disubmit!');
+      
+      // Reset form
+      setFormData({
+        module: '',
+        name: '',
+        priority: '',
+        description: '',
+        status: '',
+        relation: '',
+        createdAt: new Date().toISOString().split('T')[0],
+        requestedBy: '',
+        notes: '',
+        reference: null,
+      });
+      
+    } catch {
+      // Show error notification
+      window.alert('Gagal menyimpan request. Silakan coba lagi!');
+    }
   };
 
   return (
-    <ComponentCard title="Request Inputs">
+    <>
+     <ComponentCard title="Request Inputs">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Modul/Halaman Input */}
         <div>
@@ -146,7 +157,7 @@ export default function RequestInputs() {
           <Input 
             type="text" 
             name="module"
-            defaultValue={formData.module}
+            // defaultValue={formData.module}
             onChange={handleInputChange}
             placeholder="Masukkan Modul/Halaman"
             // error={errors.module}
@@ -159,7 +170,7 @@ export default function RequestInputs() {
           <Input 
             type="text" 
             name="name"
-            defaultValue={formData.name}
+            // defaultValue={formData.name}
             onChange={handleInputChange}
             placeholder="Masukkan Kebutuhan"
             // error={errors.name}
@@ -170,7 +181,7 @@ export default function RequestInputs() {
         <div>
           <Label>Deskripsi</Label>
           <TextArea
-            value={formData.description}
+            // value={formData.description}
             onChange={handleTextAreaChange('description')}
             rows={6}
             placeholder='Masukkan Deskripsi Kebutuhan'
@@ -186,7 +197,7 @@ export default function RequestInputs() {
               options={optionsPriority}
               placeholder="Pilih Prioritas"
               onChange={handleSelectChange('priority')}
-              defaultValue={formData.priority}
+              // defaultValue={formData.priority}
               className="dark:bg-dark-900"
             />
             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -203,7 +214,7 @@ export default function RequestInputs() {
               options={optionsStatus}
               placeholder="Pilih Status"
               onChange={handleSelectChange('status')}
-              defaultValue={formData.status}
+              // defaultValue={formData.status}
               className="dark:bg-dark-900"
             />
             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
@@ -218,7 +229,7 @@ export default function RequestInputs() {
           <Input 
             type="text" 
             name="relation"
-            defaultValue={formData.relation}
+            // defaultValue={formData.relation}
             onChange={handleInputChange}
             placeholder="Masukkan Relasi" 
           />
@@ -241,7 +252,7 @@ export default function RequestInputs() {
           <Input 
             type="text" 
             name="requestedBy"
-            defaultValue={formData.requestedBy}
+            // defaultValue={formData.requestedBy}
             onChange={handleInputChange}
             placeholder="Masukkan Requestor"
             // error={errors.requestedBy}
@@ -285,5 +296,7 @@ export default function RequestInputs() {
         </button>
       </form>
     </ComponentCard>
+    </>
+   
   );
 }
