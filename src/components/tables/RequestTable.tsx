@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -13,11 +13,13 @@ import Badge from "../ui/badge/Badge";
 import Pagination from "./Pagination";
 import { useRequests } from "@/context/RequestContext";
 import NotFound from "@/app/not-found";
+import { DownloadTableExcel } from 'react-export-table-to-excel';
 
 export default function RequestTable() {
-    const { requests, isLoading } = useRequests();
-    const FileCell = ({ reference }: { reference: File | string | null }) => {
+  const { requests, isLoading } = useRequests();
+  const FileCell = ({ reference }: { reference: File | string | null }) => {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  
 
   useEffect(() => {
     // Cleanup function
@@ -79,6 +81,19 @@ export default function RequestTable() {
 
   return <span className="text-yellow-500">Unsupported Reference Type</span>;
 };
+  
+  const tableRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const totalPages = Math.ceil(requests.length / itemsPerPage);
+
+  // Get current items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = requests
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(indexOfFirstItem, indexOfLastItem);
 
   if (isLoading) {
     return <div>Loading requests...</div>;
@@ -95,7 +110,8 @@ export default function RequestTable() {
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
         <div className="min-w-[1102px]">
-          <Table>
+          
+          <Table ref={tableRef}>
             {/* Table Header */}
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
@@ -170,14 +186,10 @@ export default function RequestTable() {
 
             {/* Table Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {requests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((request) => (
+              {currentItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((request) => (
                 <TableRow key={request.id}>
-                  <TableCell className="px-5 py-4 sm:px-6 text-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 overflow-hidden rounded-full">
-                        {request.id}
-                      </div>
-                    </div>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                    {`REQ${request.id}`}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     {request.module}
@@ -231,17 +243,31 @@ export default function RequestTable() {
                     {request.notes}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-  <FileCell reference={request.reference} />
-</TableCell>
+                    <FileCell reference={request.reference} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-
         </div>
       </div>
     </div>
-        <Pagination currentPage={0} totalPages={10} onPageChange={() => {}}/>
+      <div className="flex justify-between items-center mt-4">
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => setCurrentPage(page)}  />
+        
+        <DownloadTableExcel
+        filename="Requests_Table"
+        sheet="request"
+        currentTableRef={tableRef.current}
+    >
+        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            Export to Excel
+        </button>
+    </DownloadTableExcel>
+      </div>
     </div>
   );
 }
